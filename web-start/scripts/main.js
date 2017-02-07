@@ -83,9 +83,19 @@ FriendlyChat.prototype.saveMessage = function(e) {
   e.preventDefault();
   // Check that the user entered a message and is signed in.
   if (this.messageInput.value && this.checkSignedInWithMessage()) {
-
-    // TODO(DEVELOPER): push new message to Firebase.
-
+    var currentUser = this.auth.currentUser;
+    // Add a new message entry to the Firebase Database.
+    this.messagesRef.push({
+      name: currentUser.displayName,
+      text: this.messageInput.value,
+      photoUrl: currentUser.photoURL || '/images/profile_placeholder.png'
+    }).then(function() {
+      // Clear message text field and SEND button state.
+      FriendlyChat.resetMaterialTextfield(this.messageInput);
+      this.toggleButton();
+    }.bind(this)).catch(function(error) {
+      console.error('Error writing new message to Firebase Database', error);
+    });
   }
 };
 
@@ -138,11 +148,11 @@ FriendlyChat.prototype.signOut = function() {
 FriendlyChat.prototype.onAuthStateChanged = function(user) {
   if (user) { // User is signed in!
     // Get profile pic and user's name from the Firebase user object.
-    var profilePicUrl = user.photoURL; 
-    var userName = user.displayName;   
+    var profilePicUrl = user.photoURL;
+    var userName = user.displayName;
 
     // Set the user's profile pic and name.
-    this.userPic.style.backgroundImage = 'url(' + profilePicUrl + ')';
+    this.userPic.style.backgroundImage = 'url(' + (profilePicUrl || '/images/profile_placeholder.png') + ')';
     this.userName.textContent = userName;
 
     // Show user's profile and sign-out button.
